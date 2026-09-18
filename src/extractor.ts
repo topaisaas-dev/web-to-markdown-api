@@ -25,6 +25,12 @@ export interface ExtractedMetadata {
   language?: string;
 }
 
+export interface ExtractedLinks {
+  internal: string[];
+  external: string[];
+  documents: string[];
+}
+
 export interface ExtractionResult {
   success: true;
   url: string;
@@ -33,14 +39,12 @@ export interface ExtractionResult {
   wordCount: number;
   estimatedTokens: number;
   leads: LeadIntelligence;
+  links?: ExtractedLinks;
 }
 
 // Regex to detect email addresses, excluding image extensions
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 const INVALID_EMAIL_EXTENSIONS = /\.(png|jpg|jpeg|gif|webp|svg|css|js|woff|woff2|ttf)$/i;
-
-// Regex for international phone numbers (+33 ..., (555) ..., etc.)
-const PHONE_REGEX = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{2,4}[-.\s]?\d{2,4}[-.\s]?\d{0,4}/g;
 
 /**
  * Extracts B2B leads (emails, phones, social links) from HTML.
@@ -137,24 +141,57 @@ export function extractMetadata(html: string, targetUrl: URL): ExtractedMetadata
 }
 
 /**
+ * Extracts all links categorized (internal, external, documents).
+ */
+export function extractLinks(html: string, targetUrl: URL): ExtractedLinks {
+  const internal = new Set<string>();
+  const external = new Set<string>();
+  const documents = new Set<string>();
+
+  const linkMatches = html.matchAll(/href=["']([^"'#\s]+)["']/gi);
+  for (const m of linkMatches) {
+    let raw = m[1].trim();
+    if (raw.startsWith("mailto:") || raw.startsWith("tel:") || raw.startsWith("javascript:")) continue;
+
+    let resolved: URL;
+    try {
+      resolved = new URL(raw, targetUrl.origin);
+    } catch {
+      continue;
+    }
+
+    if (resolved.pathname.match(/\.(pdf|docx?|xlsx?|csv|zip)$/i)) {
+      documents.add(resolved.href);
+    } else if (resolved.hostname === targetUrl.hostname) {
+      internal.add(resolved.href);
+    } else {
+      external.add(resolved.href);
+    }
+  }
+
+  return {
+    internal: Array.from(internal).slice(0, 50),
+    external: Array.from(external).slice(0, 50),
+    documents: Array.from(documents).slice(0, 20)
+  };
+}
+
+/**
  * Converts raw HTML into clean, token-efficient Markdown.
  */
 export function htmlToMarkdown(html: string): string {
   let content = html;
 
-  // 1. Remove non-content tags: scripts, styles, iframes, svgs, noscripts, forms, navs, footers
   content = content.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
   content = content.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
   content = content.replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, "");
   content = content.replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, "");
   content = content.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "");
-  content = content.replace(/<!--[\s\S]*?-->/g, ""); // comments
+  content = content.replace(/<!--[\s\S]*?-->/g, "");
 
-  // 2. Remove navigation bars and footers to keep main content clean
   content = content.replace(/<nav\b[^<]*(?:(?!<\/nav>)<[^<]*)*<\/nav>/gi, "");
   content = content.replace(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, "");
 
-  // 3. Headings
   content = content.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, "\n\n# $1\n\n");
   content = content.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, "\n\n## $1\n\n");
   content = content.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, "\n\n### $1\n\n");
@@ -162,20 +199,15 @@ export function htmlToMarkdown(html: string): string {
   content = content.replace(/<h5[^>]*>([\s\S]*?)<\/h5>/gi, "\n\n##### $1\n\n");
   content = content.replace(/<h6[^>]*>([\s\S]*?)<\/h6>/gi, "\n\n###### $1\n\n");
 
-  // 4. Formatting tags
   content = content.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "**$1**");
   content = content.replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "**$1**");
   content = content.replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "*$1*");
   content = content.replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "*$1*");
   content = content.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`");
 
-  // 5. Code blocks
   content = content.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, "\n```\n$1\n```\n");
-
-  // 6. Lists
   content = content.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "\n- $1");
 
-  // 7. Links: <a href="url">text</a> -> [text](url)
   content = content.replace(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, text) => {
     const cleanText = text.replace(/<[^>]+>/g, "").trim();
     if (!cleanText || href.startsWith("javascript:") || href.startsWith("#")) {
@@ -184,15 +216,12 @@ export function htmlToMarkdown(html: string): string {
     return `[${cleanText}](${href})`;
   });
 
-  // 8. Paragraphs and line breaks
   content = content.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, "\n\n$1\n\n");
   content = content.replace(/<br\s*[\/]?>/gi, "\n");
   content = content.replace(/<hr\s*[\/]?>/gi, "\n\n---\n\n");
 
-  // 9. Strip all remaining HTML tags
   content = content.replace(/<[^>]+>/g, " ");
 
-  // 10. Decode common HTML entities
   content = content.replace(/&nbsp;/g, " ");
   content = content.replace(/&amp;/g, "&");
   content = content.replace(/&lt;/g, "<");
@@ -200,16 +229,12 @@ export function htmlToMarkdown(html: string): string {
   content = content.replace(/&quot;/g, "\"");
   content = content.replace(/&#39;/g, "'");
 
-  // 11. Normalize excessive whitespace and blank lines
   content = content.replace(/[ \t]+/g, " ");
   content = content.replace(/\n\s*\n\s*\n+/g, "\n\n");
 
   return content.trim();
 }
 
-/**
- * Estimates token count based on standard ~4 characters per token heuristic.
- */
 export function countTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
