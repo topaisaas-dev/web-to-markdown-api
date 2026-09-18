@@ -1,0 +1,22 @@
+﻿{
+  "name": "web-to-markdown-lead-api",
+  "version": "1.0.0",
+  "description": "Universal Web-to-Markdown & B2B Lead Intelligence API for AI Agents",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test tests/extractor.test.js"
+  },
+  "keywords": ["ai", "agents", "markdown", "web-scraper", "lead-generation", "api", "cloudflare-worker"],
+  "author": "topaisaas-dev",
+  "license": "MIT",
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241230.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.99.0"
+  }
+}

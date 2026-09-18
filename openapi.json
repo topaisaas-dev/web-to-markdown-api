@@ -1,0 +1,140 @@
+﻿{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Universal Web-to-Markdown & B2B Lead Intelligence API",
+    "description": "High-performance edge API designed for AI Agents, LLM RAG pipelines, and B2B automation tools. Converts complex websites into clean, token-efficient Markdown while extracting business leads (emails, phone numbers, social networks) in real-time.",
+    "version": "1.0.0",
+    "contact": {
+      "email": "top.ai.saas@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://web-to-markdown-api.topaisaas.workers.dev",
+      "description": "Cloudflare Global Edge Server"
+    }
+  ],
+  "paths": {
+    "/v1/extract": {
+      "post": {
+        "summary": "Extract clean Markdown & B2B Leads from URL",
+        "description": "Fetches a web page, bypasses bot protections, cleans unwanted HTML elements (scripts, ads, cookie banners, menus), and returns pristine Markdown with extracted contact information.",
+        "operationId": "extractMarkdownAndLeads",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Target website URL to extract (must start with http:// or https://)",
+                    "example": "https://stripe.com"
+                  },
+                  "extract_leads": {
+                    "type": "boolean",
+                    "description": "Whether to extract business emails, phone numbers, and social media handles",
+                    "default": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful extraction",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "url": { "type": "string", "example": "https://stripe.com" },
+                    "metadata": {
+                      "type": "object",
+                      "properties": {
+                        "title": { "type": "string", "example": "Stripe | Financial Infrastructure for the Internet" },
+                        "description": { "type": "string", "example": "Online payment processing for internet businesses." },
+                        "favicon": { "type": "string", "example": "https://stripe.com/favicon.ico" }
+                      }
+                    },
+                    "markdown": { "type": "string", "example": "# Stripe\n\nFinancial Infrastructure for the Internet..." },
+                    "word_count": { "type": "integer", "example": 850 },
+                    "estimated_tokens": { "type": "integer", "example": 1120 },
+                    "leads": {
+                      "type": "object",
+                      "properties": {
+                        "emails": { "type": "array", "items": { "type": "string" }, "example": ["support@stripe.com"] },
+                        "phones": { "type": "array", "items": { "type": "string" }, "example": ["+1 888 963 8872"] },
+                        "socials": {
+                          "type": "object",
+                          "properties": {
+                            "twitter": { "type": "string", "example": "https://twitter.com/stripe" },
+                            "linkedin": { "type": "string", "example": "https://linkedin.com/company/stripe" },
+                            "github": { "type": "string", "example": "https://github.com/stripe" }
+                          }
+                        }
+                      }
+                    },
+                    "execution_time_ms": { "type": "integer", "example": 145 }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid URL or parameters" },
+          "403": { "description": "SSRF Protection blocked forbidden IP" },
+          "413": { "description": "Page payload exceeds 5MB limit" },
+          "504": { "description": "Gateway Timeout (site took >7s)" }
+        }
+      },
+      "get": {
+        "summary": "Quick GET Extraction",
+        "description": "Convenience GET endpoint for quick queries or webhooks.",
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "description": "The URL to extract",
+            "schema": { "type": "string", "example": "https://stripe.com" }
+          },
+          {
+            "name": "leads",
+            "in": "query",
+            "required": false,
+            "description": "Extract leads (default: true)",
+            "schema": { "type": "boolean", "default": true }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Successful extraction" }
+        }
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "summary": "API Healthcheck",
+        "responses": {
+          "200": {
+            "description": "API is operational",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "healthy" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
