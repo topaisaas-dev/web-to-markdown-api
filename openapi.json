@@ -1,4 +1,4 @@
-﻿{
+{
   "openapi": "3.0.3",
   "info": {
     "title": "Universal Web-to-Markdown & B2B Lead Intelligence API",
@@ -26,7 +26,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["url"],
+                "required": [
+                  "url"
+                ],
                 "properties": {
                   "url": {
                     "type": "string",
@@ -52,44 +54,104 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "url": { "type": "string", "example": "https://stripe.com" },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "url": {
+                      "type": "string",
+                      "example": "https://stripe.com"
+                    },
                     "metadata": {
                       "type": "object",
                       "properties": {
-                        "title": { "type": "string", "example": "Stripe | Financial Infrastructure for the Internet" },
-                        "description": { "type": "string", "example": "Online payment processing for internet businesses." },
-                        "favicon": { "type": "string", "example": "https://stripe.com/favicon.ico" }
+                        "title": {
+                          "type": "string",
+                          "example": "Stripe | Financial Infrastructure for the Internet"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Online payment processing for internet businesses."
+                        },
+                        "favicon": {
+                          "type": "string",
+                          "example": "https://stripe.com/favicon.ico"
+                        }
                       }
                     },
-                    "markdown": { "type": "string", "example": "# Stripe\n\nFinancial Infrastructure for the Internet..." },
-                    "word_count": { "type": "integer", "example": 850 },
-                    "estimated_tokens": { "type": "integer", "example": 1120 },
+                    "markdown": {
+                      "type": "string",
+                      "example": "# Stripe\n\nFinancial Infrastructure for the Internet..."
+                    },
+                    "word_count": {
+                      "type": "integer",
+                      "example": 850
+                    },
+                    "estimated_tokens": {
+                      "type": "integer",
+                      "example": 1120
+                    },
                     "leads": {
                       "type": "object",
                       "properties": {
-                        "emails": { "type": "array", "items": { "type": "string" }, "example": ["support@stripe.com"] },
-                        "phones": { "type": "array", "items": { "type": "string" }, "example": ["+1 888 963 8872"] },
+                        "emails": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "example": [
+                            "support@stripe.com"
+                          ]
+                        },
+                        "phones": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "example": [
+                            "+1 888 963 8872"
+                          ]
+                        },
                         "socials": {
                           "type": "object",
                           "properties": {
-                            "twitter": { "type": "string", "example": "https://twitter.com/stripe" },
-                            "linkedin": { "type": "string", "example": "https://linkedin.com/company/stripe" },
-                            "github": { "type": "string", "example": "https://github.com/stripe" }
+                            "twitter": {
+                              "type": "string",
+                              "example": "https://twitter.com/stripe"
+                            },
+                            "linkedin": {
+                              "type": "string",
+                              "example": "https://linkedin.com/company/stripe"
+                            },
+                            "github": {
+                              "type": "string",
+                              "example": "https://github.com/stripe"
+                            }
                           }
                         }
                       }
                     },
-                    "execution_time_ms": { "type": "integer", "example": 145 }
+                    "execution_time_ms": {
+                      "type": "integer",
+                      "example": 145
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Invalid URL or parameters" },
-          "403": { "description": "SSRF Protection blocked forbidden IP" },
-          "413": { "description": "Page payload exceeds 5MB limit" },
-          "504": { "description": "Gateway Timeout (site took >7s)" }
+          "400": {
+            "description": "Invalid URL or parameters"
+          },
+          "403": {
+            "description": "SSRF Protection blocked forbidden IP"
+          },
+          "413": {
+            "description": "Page payload exceeds 5MB limit"
+          },
+          "504": {
+            "description": "Gateway Timeout (site took >7s)"
+          }
         }
       },
       "get": {
@@ -101,18 +163,26 @@
             "in": "query",
             "required": true,
             "description": "The URL to extract",
-            "schema": { "type": "string", "example": "https://stripe.com" }
+            "schema": {
+              "type": "string",
+              "example": "https://stripe.com"
+            }
           },
           {
             "name": "leads",
             "in": "query",
             "required": false,
             "description": "Extract leads (default: true)",
-            "schema": { "type": "boolean", "default": true }
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
           }
         ],
         "responses": {
-          "200": { "description": "Successful extraction" }
+          "200": {
+            "description": "Successful extraction"
+          }
         }
       }
     },
@@ -127,7 +197,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "healthy" }
+                    "status": {
+                      "type": "string",
+                      "example": "healthy"
+                    }
                   }
                 }
               }
