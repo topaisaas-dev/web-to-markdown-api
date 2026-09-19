@@ -1,4 +1,4 @@
-﻿import { Hono } from "hono";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { validateSafeUrl, FETCH_TIMEOUT_MS, MAX_CONTENT_LENGTH } from "./security";
 import { extractLeads, extractMetadata, extractLinks, htmlToMarkdown, countTokens } from "./extractor";
@@ -199,59 +199,123 @@ app.get("/v1/extract", async (c) => {
  * Interactive Web Dashboard & Demo
  */
 app.get("/", (c) => {
+  const accept = c.req.header("accept") || "";
+  const format = c.req.query("format");
+
+  if (format === "json" || (!accept.includes("text/html") && accept.includes("application/json"))) {
+    return c.json({
+      service: "Universal Web-to-Markdown & Lead Intelligence API",
+      tagline: "Ad-free web extraction, clean Markdown for LLMs, and instant B2B contact detection",
+      version: "1.1.0",
+      health_url: "/v1/health",
+      endpoints: {
+        "POST /v1/extract": "Complete Extraction (Markdown + Leads + Metadata)",
+        "POST /v1/extract/leads": "B2B Lead Hunter (Emails, Phones, Socials)",
+        "POST /v1/extract/metadata": "Instant SEO & OpenGraph metadata",
+        "POST /v1/extract/links": "Crawler & Sitemap Link Discoverer",
+        "GET /v1/extract": "Quick URL extraction query fallback"
+      }
+    });
+  }
+
+  c.header("Cache-Control", "no-cache, no-store, must-revalidate");
+
   return c.html(`<!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Universal Web-to-Markdown & Lead Intelligence API</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Web-to-Markdown & Lead Intelligence API • Live Demo</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #f8fafc; color: #334155; padding: 40px 20px; line-height: 1.6; }
-    .box { max-width: 860px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-    h1 { color: #0f172a; }
-    .badge { background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 13px; }
-    input { width: 70%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
-    button { background: #2563eb; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    pre { background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; max-height: 350px; }
-    .tag { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 6px; font-size: 12px; margin: 2px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #090d16; color: #e2e8f0; padding: 40px 20px; line-height: 1.6; }
+    .container { max-width: 900px; margin: 0 auto; background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 36px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 214, 0, 0.15); color: #ffd600; border: 1px solid rgba(255, 214, 0, 0.3); padding: 4px 12px; border-radius: 9999px; font-weight: 600; font-size: 13px; margin-bottom: 16px; }
+    .badge::before { content: ''; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+    h1 { font-size: 28px; font-weight: 800; color: #ffffff; margin-bottom: 8px; }
+    p.subtitle { font-size: 16px; color: #94a3b8; margin-bottom: 24px; }
+    .playground { background: #1a2234; border: 1px solid #2d3748; border-radius: 12px; padding: 24px; margin-bottom: 28px; }
+    .input-row { display: flex; gap: 12px; margin-bottom: 16px; }
+    input[type="url"], input[type="text"] { flex: 1; padding: 14px 16px; background: #0b1120; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 15px; outline: none; transition: border-color 0.2s; }
+    input[type="url"]:focus, input[type="text"]:focus { border-color: #ffd600; }
+    button { background: #ffd600; color: #000; border: none; padding: 14px 24px; border-radius: 8px; font-weight: 700; font-size: 15px; cursor: pointer; transition: transform 0.1s, background 0.2s; }
+    button:hover { background: #ffea00; }
+    button:active { transform: scale(0.98); }
+    #output { display: none; margin-top: 16px; }
+    pre { background: #070b12; border: 1px solid #1e293b; color: #38bdf8; padding: 16px; border-radius: 8px; overflow-x: auto; max-height: 400px; font-size: 13px; font-family: monospace; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .chip { background: #1e293b; border: 1px solid #334155; color: #cbd5e1; padding: 6px 12px; border-radius: 6px; font-size: 13px; text-decoration: none; }
+    .links-bar { margin-top: 24px; padding-top: 20px; border-top: 1px solid #1f2937; display: flex; gap: 16px; font-size: 14px; }
+    .links-bar a { color: #ffd600; text-decoration: none; font-weight: 600; }
+    .links-bar a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <span class="badge">🚀 4 Specialized Endpoints Live</span>
-    <h1>Universal Web-to-Markdown & B2B Lead Intelligence API</h1>
-    <p>Suite d'extraction haute performance pour <strong>Agents IA, RAG et Automatisation Commerciale</strong>.</p>
-    
-    <h3>⚡ Testez en direct :</h3>
-    <div style="display:flex; gap:10px;">
-      <input type="url" id="u" value="https://stripe.com">
-      <button onclick="runTest()">Extraire</button>
-    </div>
-    <div id="out" style="display:none; margin-top:20px;">
-      <p id="stats" style="font-weight:600; color:#2563eb;"></p>
-      <h4>Aperçu Markdown épuré :</h4>
-      <pre id="md"></pre>
+  <div class="container">
+    <div class="badge">Live 24/7 on Cloudflare Global Edge</div>
+    <h1>Universal Web-to-Markdown & Lead Intelligence API</h1>
+    <p class="subtitle">Ad-free web extraction, clean Markdown for LLMs, and contact detection for autonomous agents.</p>
+
+    <div class="playground">
+      <div class="input-row">
+        <input type="url" id="targetUrl" value="https://stripe.com" placeholder="https://example.com">
+        <button onclick="runExtract()" id="btn">Extract Web Page</button>
+      </div>
+      <div id="output">
+        <div style="margin-bottom: 8px; font-size: 14px; color: #a3e635;" id="stats"></div>
+        <pre id="md"></pre>
+      </div>
     </div>
 
-    <h3>📚 Les 4 Endpoints Dédiés :</h3>
-    <ul>
-      <li><code>POST /v1/extract</code> : Extraction Complète (Markdown + Leads + Métadonnées)</li>
-      <li><code>POST /v1/extract/leads</code> : Chasseur B2B (E-mails, Téléphones, Réseaux Sociaux)</li>
-      <li><code>POST /v1/extract/metadata</code> : Métadonnées SEO & OpenGraph ultra-rapides</li>
-      <li><code>POST /v1/extract/links</code> : Découverte de liens & documents PDF</li>
-    </ul>
+    <h3 style="color:#fff; font-size:16px; margin-bottom: 8px;">📚 Official Endpoints</h3>
+    <div class="chips">
+      <span class="chip"><code>POST /v1/extract</code> (Full Markdown + Leads)</span>
+      <span class="chip"><code>POST /v1/extract/leads</code> (B2B Hunter)</span>
+      <span class="chip"><code>POST /v1/extract/metadata</code> (SEO / OpenGraph)</span>
+      <span class="chip"><code>POST /v1/extract/links</code> (Crawler / Sitemaps)</span>
+      <span class="chip"><code>GET /v1/health</code> (Healthcheck)</span>
+    </div>
+
+    <div class="links-bar">
+      <a href="https://rapidapi.com/user/topaisaas-dev" target="_blank">⚡ RapidAPI Marketplace</a>
+      <a href="https://github.com/topaisaas-dev/web-to-markdown-api" target="_blank">📦 GitHub Repository</a>
+      <a href="/v1/health" target="_blank">🩺 Healthcheck</a>
+    </div>
   </div>
+
   <script>
-    async function runTest() {
-      const url = document.getElementById('u').value;
-      const res = await fetch('/v1/extract', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({url})
-      });
-      const data = await res.json();
-      document.getElementById('out').style.display = 'block';
-      document.getElementById('stats').innerText = data.word_count + ' mots • ' + data.execution_time_ms + ' ms • ' + data.leads.emails.length + ' emails trouvés';
-      document.getElementById('md').innerText = data.markdown.slice(0, 1000) + '...';
+    async function runExtract() {
+      const btn = document.getElementById('btn');
+      const url = document.getElementById('targetUrl').value.trim();
+      if (!url) return;
+
+      btn.innerText = 'Extracting...';
+      btn.disabled = true;
+
+      try {
+        const start = Date.now();
+        const res = await fetch('/v1/extract', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ url })
+        });
+        const data = await res.json();
+        const elapsed = Date.now() - start;
+
+        document.getElementById('output').style.display = 'block';
+        if (data.success) {
+          document.getElementById('stats').innerText = '⚡ ' + data.word_count + ' words • ' + data.estimated_tokens + ' tokens • ' + data.leads.emails.length + ' emails found (' + elapsed + ' ms)';
+          document.getElementById('md').innerText = data.markdown.slice(0, 1500) + (data.markdown.length > 1500 ? '\n\n... [truncated preview]' : '');
+        } else {
+          document.getElementById('stats').innerText = '❌ Error: ' + (data.error || 'Failed to extract');
+          document.getElementById('md').innerText = JSON.stringify(data, null, 2);
+        }
+      } catch (err) {
+        alert('Extraction failed: ' + err.message);
+      } finally {
+        btn.innerText = 'Extract Web Page';
+        btn.disabled = false;
+      }
     }
   </script>
 </body>
