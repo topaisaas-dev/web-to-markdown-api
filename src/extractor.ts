@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Core Extraction & HTML-to-Markdown Engine
  * Zero-dependency, ultra-fast algorithmic parser for Cloudflare Workers edge.
  */
@@ -190,7 +190,7 @@ export function htmlToMarkdown(html: string): string {
   content = content.replace(/<!--[\s\S]*?-->/g, "");
 
   content = content.replace(/<nav\b[^<]*(?:(?!<\/nav>)<[^<]*)*<\/nav>/gi, "");
-  content = content.replace(/<footer\b[^<]*(?:(?!<\/footer>)<[^<]*)*<\/footer>/gi, "");
+  content = content.replace(/<\/?footer[^>]*>/gi, "\n");
 
   content = content.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, "\n\n# $1\n\n");
   content = content.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, "\n\n## $1\n\n");
@@ -204,6 +204,30 @@ export function htmlToMarkdown(html: string): string {
   content = content.replace(/<em[^>]*>([\s\S]*?)<\/em>/gi, "*$1*");
   content = content.replace(/<i[^>]*>([\s\S]*?)<\/i>/gi, "*$1*");
   content = content.replace(/<code[^>]*>([\s\S]*?)<\/code>/gi, "`$1`");
+  content = content.replace(/<sup[^>]*>([\s\S]*?)<\/sup>/gi, "$1");
+  content = content.replace(/<sub[^>]*>([\s\S]*?)<\/sub>/gi, "$1");
+  content = content.replace(/<small[^>]*>([\s\S]*?)<\/small>/gi, "$1");
+
+  // Convert HTML tables to Markdown tables
+  content = content.replace(/<table\b[^>]*>([\s\S]*?)<\/table>/gi, (_, tableBody) => {
+    const rows: string[][] = [];
+    const rowMatches = tableBody.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi);
+    for (const r of rowMatches) {
+      const cells: string[] = [];
+      const cellMatches = r[1].matchAll(/<(?:td|th)\b[^>]*>([\s\S]*?)<\/(?:td|th)>/gi);
+      for (const c of cellMatches) {
+        cells.push(c[1].replace(/<[^>]+>/g, "").trim());
+      }
+      if (cells.length > 0) rows.push(cells);
+    }
+    if (rows.length === 0) return "";
+    let md = "\n\n| " + rows[0].join(" | ") + " |\n";
+    md += "| " + rows[0].map(() => "---").join(" | ") + " |\n";
+    for (let i = 1; i < rows.length; i++) {
+      md += "| " + rows[i].join(" | ") + " |\n";
+    }
+    return md + "\n\n";
+  });
 
   content = content.replace(/<pre[^>]*>([\s\S]*?)<\/pre>/gi, "\n```\n$1\n```\n");
   content = content.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "\n- $1");
