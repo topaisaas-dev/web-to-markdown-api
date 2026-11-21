@@ -6,6 +6,32 @@ Convert any webpage into clean, noise-free, token-optimized **Markdown** while s
 
 ---
 
+## Quick Try in 5 Seconds (Zero Signup)
+
+Test the live `topaigateway.com` edge endpoint right now with zero API key:
+
+```bash
+# Clean Web-to-Markdown Extraction
+curl -s -X POST https://topaigateway.com/v1/extract \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+
+# Compress extracted Markdown tokens before RAG/LLM calls
+curl -s -X POST https://topaigateway.com/v1/compress \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Sample extracted documentation paragraph with redundant whitespace."}'
+
+# Heal malformed scraped JSON blocks
+curl -s -X POST https://topaigateway.com/v1/api/12-json-surgeon \
+  -H "Content-Type: application/json" \
+  -d '{"broken_json":"{\"title\": \"Example\",}"}'
+```
+
+- **Live Sample n8n Workflow**: [topai-n8n-starter.json](https://topaigateway.com/samples/topai-n8n-starter.json?utm_source=github&utm_campaign=web-to-markdown-api)
+- **Live Sample Cursor Rules**: [topai-cursor-rules.txt](https://topaigateway.com/download/samples/topai-cursor-rules.txt?utm_source=github&utm_campaign=web-to-markdown-api)
+
+---
+
 ## ⚡ Key Highlights
 - **Zero Token Waste** : Strips 100% of non-content clutter (scripts, styles, cookie banners, navigation boilerplate, ads).
 - **Automated B2B Lead Intelligence** : Automatically surfaces verified email addresses, phone numbers, and social links (LinkedIn, Twitter/X, GitHub, Instagram).
@@ -92,9 +118,18 @@ console.log(data);
 
 ---
 
-## 💰 Recommended RapidAPI Pricing Tiers
+---
 
-1. **Free Tier (Freemium)** : 50 requests / month ($0.00) — Perfect for developers testing their agent pipelines.
-2. **Starter Tier** : 2,500 requests / month ($19.00 / mo) — For indie hackers and single-agent workflows.
-3. **Pro Tier (Most Popular)** : 10,000 requests / month ($49.00 / mo) — For B2B agencies and automated scrapers.
-4. **Agency / Ultra Tier** : 50,000 requests / month ($149.00 / mo) — For high-volume SaaS applications.
+## Toolkits & Plans (100% USD · Zero Subscription Lock-In)
+
+All toolkits include our **14-Day No-Questions-Asked Money-Back Guarantee** and instant key/download delivery:
+
+| Toolkit / Plan | Price | What You Get | Direct USD Checkout |
+|:---|:---|:---|:---|
+| **Pack 1: DevEx & FinOps** | **$0** (7-Day Free Trial, then $14/mo) | 101 Edge APIs · 10,000 req/mo · Rollover quota | [Start $0 Free Trial](https://topaigateway.com/checkout?pack=pack_1_devex&direct=true&utm_source=github&utm_medium=readme&utm_campaign=web-to-markdown-api) |
+| **n8n & Make Super-Pack** | **$19** one-time (Lifetime) | 50 turnkey automation workflows + full JSON pack | [Get $19 Super-Pack](https://topaigateway.com/checkout?pack=bundle_n8n_make&direct=true&utm_source=github&utm_medium=readme&utm_campaign=web-to-markdown-api) |
+| **Runaway Token Breaker** | **$29** one-time (Lifetime) | AST pruning optimizer + sub-1ms runaway cost guardrails | [Get $29 Token Breaker](https://topaigateway.com/checkout?pack=runaway_token_breaker&direct=true&utm_source=github&utm_medium=readme&utm_campaign=web-to-markdown-api) |
+| **Cursor & Claude Harness Kit** | **$49** one-time (Lifetime) | 169 agent harness tools + multi-stack `.cursorrules` & MCP | [Get $49 Harness Kit](https://topaigateway.com/checkout?pack=bundle_cursor_harness&direct=true&utm_source=github&utm_medium=readme&utm_campaign=web-to-markdown-api) |
+
+- **Free Interactive Sample Hubs**: [Download Starter n8n Workflow JSON](https://topaigateway.com/samples/topai-n8n-starter.json?utm_source=github&utm_campaign=web-to-markdown-api) · [Download Starter `.cursorrules` Pack](https://topaigateway.com/download/samples/topai-cursor-rules.txt?utm_source=github&utm_campaign=web-to-markdown-api)
+- **Native MCP Server (npm)**: `npx -y @topaisaas/mcp-server`
